@@ -5,17 +5,16 @@ import React, { useEffect, useState } from "react";
 import { signOut, signIn, useSession, getProviders } from "next-auth/react";
 
 const Navbar = () => {
-  const isUserLoggedIn = true;
+  const { data: session } = useSession();
   const [providers, setProviders] = useState(null);
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   useEffect(() => {
-    const setGenProviders = async () => {
-      const response = await getProviders();
-      console.log(response);
-      setProviders(response);
-    };
-    setGenProviders();
+    (async () => {
+      const res = await getProviders();
+      console.log(res);
+      setProviders(res);
+    })();
   }, []);
   return (
     <nav className="flex-between w-full mb-16 pt-3">
@@ -30,7 +29,7 @@ const Navbar = () => {
         <p className="logo_text">Promptopia</p>
       </Link>
       <div className="sm:flex hidden">
-        {isUserLoggedIn ? (
+        {session?.user ? (
           <div className="flex gap-3 md:gap-5">
             <Link href="/create-prompt" className="black_btn">
               Create post
@@ -44,7 +43,7 @@ const Navbar = () => {
             </button>
             <Link href="/profile">
               <Image
-                src="assets/images/logo.svg"
+                src={session?.user.image}
                 alt="your avatar"
                 width={37}
                 height={37}
@@ -55,23 +54,26 @@ const Navbar = () => {
         ) : (
           <>
             {providers &&
-              Object.values(providers).map((provider) => {
+              Object.values(providers).map((provider) => (
                 <button
                   type="button"
                   key={provider.name}
-                  onClick={() => signIn(provider.id)}
+                  onClick={() => {
+                    signIn(provider.id);
+                  }}
+                  className="black_btn"
                 >
-                  Sign In
-                </button>;
-              })}
+                  Sign in
+                </button>
+              ))}
           </>
         )}
       </div>
       <div className="sm:hidden flex relative ">
-        {isUserLoggedIn ? (
+        {session?.user ? (
           <div className="flex">
             <Image
-              src="assets/images/logo.svg"
+              src={session?.user.image}
               alt="your avatar"
               width={37}
               height={37}
@@ -101,22 +103,27 @@ const Navbar = () => {
                     signOut();
                   }}
                   className="mt-5 w-full black_btn"
-                >Sign Out</button>
+                >
+                  Sign Out
+                </button>
               </div>
             )}
           </div>
         ) : (
           <>
             {providers &&
-              Object.values(providers).map((provider) => {
+              Object.values(providers).map((provider) => (
                 <button
                   type="button"
-                  key={provider?.name}
-                  onClick={() => signIn(provider.id)}
+                  key={provider.name}
+                  onClick={() => {
+                    signIn(provider.id);
+                  }}
+                  className="black_btn"
                 >
-                  Sign In
-                </button>;
-              })}
+                  Sign in
+                </button>
+              ))}
           </>
         )}
       </div>
