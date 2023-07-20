@@ -19,8 +19,10 @@ const PromptCardList = ({ data, handleTagClick }) => {
 
 const Feed = () => {
   const [searchText, setSearchText] = useState("");
+  const [searchTimeout, setSearchTimeout] = useState(false);
+  const [searchedResults, setSearchedResults] = useState([]);
+
   const [posts, setPosts] = useState([]);
-  const handleSearchChange = (e) => {};
   const fetchPosts = async () => {
     const response = await fetch("/api/prompt");
     const data = await response.json();
@@ -29,10 +31,40 @@ const Feed = () => {
   useEffect(() => {
     fetchPosts();
   }, []);
-  const handleTagClick = () => {};
+
+  const handleTagClick = (tag) => {
+    setSearchText(tag);
+
+    const searchResult = filterPrompts(tag);
+    setSearchedResults(searchResult);
+  };
+  const filterPrompts = (searchtext) => {
+    const regex = new RegExp(searchtext, "i"); // 'i' flag for case-insensitive search
+    return posts.filter(
+      (item) =>
+        regex.test(item.creator.username) ||
+        regex.test(item.tag) ||
+        regex.test(item.prompt)
+    );
+  };
+
+  const handleSearchChange = (e) => {
+    clearTimeout(searchTimeout);
+    setSearchText(e.target.value);
+
+    setSearchTimeout(
+      setTimeout(() => {
+        const searchResult = filterPrompts(e.target.value);
+        setSearchedResults(searchResult);
+      }, 500)
+    );
+  };
   return (
     <section className="feed">
-      <form className="relative w-full flex-center">
+      <form
+        className="relative w-full flex-center"
+        onSubmit={(e) => e.preventDefault()}
+      >
         <input
           type="text"
           placeholder="Search for a tag or a username"
@@ -42,7 +74,14 @@ const Feed = () => {
           className="search_input peer"
         />
       </form>
-      <PromptCardList data={posts} handleTagClick={handleTagClick} />
+      {searchText ? (
+        <PromptCardList
+          data={searchedResults}
+          handleTagClick={handleTagClick}
+        />
+      ) : (
+        <PromptCardList data={posts} handleTagClick={handleTagClick} />
+      )}
     </section>
   );
 };
